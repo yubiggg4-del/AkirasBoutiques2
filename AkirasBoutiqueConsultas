@@ -1,0 +1,81 @@
+USE AkirasBoutiques;
+GO
+
+-- 1) Clientes de 2021 (según la fecha de la factura)
+SELECT * FROM cliente
+WHERE id_cliente IN (
+    SELECT id_cliente FROM factura
+    WHERE fecha >= '20210101' AND fecha < '20220101'
+);
+
+-- 2) Clientes de 2022 (hasta el momento)
+SELECT * FROM cliente
+WHERE id_cliente IN (
+    SELECT id_cliente FROM factura
+    WHERE fecha >= '20220101' AND fecha < '20230101'
+);
+
+-- 3) Clientes de diciembre de 2021
+SELECT * FROM cliente
+WHERE id_cliente IN (
+    SELECT id_cliente FROM factura
+    WHERE fecha >= '20211201' AND fecha < '20220101'
+);
+
+-- 4) Compras de los 5 clientes
+SELECT c.nombre, c.apellido, f.id_factura, f.fecha,
+       p.nombre AS producto, d.cantidad, d.precio
+FROM cliente c
+INNER JOIN factura f ON c.id_cliente = f.id_cliente
+INNER JOIN detalle d ON f.id_detalle = d.id_detalle
+INNER JOIN producto p ON d.id_producto = p.id_producto
+WHERE (c.nombre LIKE 'Valentina Anastasia%' AND c.apellido LIKE 'Huerta Corral%')
+   OR (c.nombre LIKE 'Zayra Manuela%' AND c.apellido LIKE 'Gómez López%')
+   OR (c.nombre LIKE 'Dante Eduardo%' AND c.apellido LIKE 'Dolores Meza%')
+   OR (c.nombre LIKE 'Ana Maribel%' AND c.apellido LIKE 'Cedillo Núñez%')
+   OR (c.nombre LIKE 'Rodrigo Ismael%' AND c.apellido LIKE 'Silva Ugarte%')
+ORDER BY c.id_cliente, f.fecha;
+
+-- 5) Producto que más ventas ha tenido (por cantidad vendida)
+SELECT TOP 1 WITH TIES p.id_producto,
+       CAST(p.nombre AS varchar(100)) AS producto,
+       SUM(d.cantidad) AS TotalVendido
+FROM detalle d
+INNER JOIN producto p ON d.id_producto = p.id_producto
+GROUP BY p.id_producto, CAST(p.nombre AS varchar(100))
+ORDER BY TotalVendido DESC;
+
+-- 6) Producto con más stock
+SELECT TOP 1 WITH TIES * FROM producto
+ORDER BY stock DESC;
+
+-- 7) Compras ordenadas de la más antigua a la más reciente
+SELECT * FROM factura
+ORDER BY fecha ASC;
+
+-- 8) Clientes ordenados alfabéticamente
+SELECT * FROM cliente
+ORDER BY CAST(nombre AS varchar(100)), CAST(apellido AS varchar(100));
+
+-- 9) Productos de cada categoría
+SELECT CAST(c.nombre AS varchar(100)) AS categoria,
+       p.id_producto,
+       CAST(p.nombre AS varchar(100)) AS producto,
+       p.precio, p.stock
+FROM categoria c
+INNER JOIN producto p ON c.id_categoria = p.id_categoria
+ORDER BY c.id_categoria, p.id_producto;
+
+-- 10) Encargados de las sucursales
+SELECT NombreSucursal, NombreEncargado
+FROM Sucursales;
+
+-- 11) Empleados de la sucursal Constitución
+SELECT e.*
+FROM Empleados e
+INNER JOIN Sucursales s ON e.NumSucursal = s.NumSucursal
+WHERE s.NombreSucursal LIKE '%Constitución%';
+
+-- 12) Clientes mayores de 30 años
+SELECT * FROM cliente
+WHERE fec_nac < DATEADD(YEAR, -30, CAST(GETDATE() AS date));
